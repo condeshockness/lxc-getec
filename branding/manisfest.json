@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "GETEC",
+  "description": "Branding GETEC",
+  "priority": 1,
+  "css": ["branding.css"],
+  "icon": "logo.png",
+  "favicon": "favicon.png"
+}
