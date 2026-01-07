@@ -3,7 +3,7 @@
 # ==============================================================================
 # PARTE 1: INSTALAÇÃO DO SISTEMA BASE (COCKPIT v353+)
 # Inclui: Core, Files, Navigator e Fix de Rede LXC
-# Autor : Ramon Silas Shockness
+# Autor: Ramon Silas Shockness
 # ==============================================================================
 
 set -e

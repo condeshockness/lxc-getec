@@ -2,7 +2,8 @@
 
 Instalação simples
 
-Intalar cockipit
+Instalar cockipit
+
 ```bash
 apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/main/scripts/cockpit-install.sh)"
 ```
