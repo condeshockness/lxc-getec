@@ -1,5 +1,21 @@
 # lxc-getec
 
+Instalação simples
+
+Intalar cockipit
+```bash
+apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/main/scripts/cockpit-install.sh)"
+```
+
+
+Personalizar cockpit getec
+```bash
+apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/main/scripts/cockpit-getec.sh)"
+```
+
+
+Forma manual
+
 nano cockpit-install.sh
 
 cole
