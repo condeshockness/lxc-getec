@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: semaphore-db
+    restart: always
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  semaphore:
+    build: .
+    container_name: semaphore
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      SEMAPHORE_PLAYBOOK_PATH: /iac
+    volumes:
+      - semaphore_data:/var/lib/semaphore
+      - ./iac:/iac
+
+volumes:
+  pgdata:
+  semaphore_data:
