@@ -1,0 +1,11 @@
+adduser semaphore
+usermod -aG sudo semaphore
+
+echo "semaphore ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/semaphore
+chmod 440 /etc/sudoers.d/semaphore
+
+su - semaphore
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+nano ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
