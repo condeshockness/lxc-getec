@@ -85,3 +85,5 @@ echo " PRONTO PARA CONVERTER EM TEMPLATE NO PROXMOX ✅"
 echo " Usuário 'semaphore' e chave SSH foram PRESERVADOS 🔐"
 echo " Agora desligue o container e converta para template."
 echo "==========================================================="
+
+shutdown -h now
