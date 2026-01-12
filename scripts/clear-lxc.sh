@@ -7,6 +7,16 @@
 
 set -e
 
+echo "==> Desabilitando login SSH do root..."
+sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
+
+echo "==> Bloqueando usuário root..."
+passwd -l root
+
+echo "==> Bloqueando root no Cockpit..."
+echo root >> /etc/cockpit/disallowed-users || true
+systemctl restart cockpit
+
 echo "================ LIMPEZA PARA TEMPLATE LXC ================"
 
 # ----------------------------------------------------------------------
