@@ -46,26 +46,27 @@ set -e
 FLAG="/etc/hostname.lock"
 [ -f "$FLAG" ] && exit 0
 
-RAW_HOST=$(cat /etc/hostname 2>/dev/null || true)
-CTID=$(echo "$RAW_HOST" | grep -oE '[0-9]+' || true)
+# Detecta CTID real do LXC pelo cgroup
+CTID=$(basename "$(cat /proc/1/cpuset 2>/dev/null)" | tr -cd '0-9')
 
 [ -z "$CTID" ] && exit 0
 
 NEW_HOST="aluno-${CTID}"
 
-echo "$NEW_HOST" >/etc/hostname
-hostnamectl set-hostname "$NEW_HOST"
+echo "$NEW_HOST" > /etc/hostname
+hostnamectl set-hostname "$NEW_HOST" --static
 
 touch "$FLAG"
 EOF
+
 
 chmod +x /usr/local/sbin/set-hostname-from-ctid.sh
 
 cat <<'EOF' >/etc/systemd/system/set-hostname-from-ctid.service
 [Unit]
 Description=Define hostname aluno-<CTID> no primeiro boot
-After=network-online.target
-Wants=network-online.target
+After=systemd-remount-fs.service
+Wants=systemd-remount-fs.service
 
 [Service]
 Type=oneshot
