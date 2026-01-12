@@ -108,6 +108,31 @@ done
 # Captura o novo IP
 NEW_IP=$(ip -4 addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n 1)
 
+
+echo "==> Atualizando sistema e habilitando atualizações automáticas de segurança..."
+
+apt update
+apt full-upgrade -y
+
+apt install -y unattended-upgrades apt-listchanges
+
+dpkg-reconfigure -f noninteractive unattended-upgrades
+
+# Garante apenas segurança automática (padrão Debian)
+cat <<'EOF' >/etc/apt/apt.conf.d/50unattended-upgrades
+Unattended-Upgrade::Origins-Pattern {
+        "origin=Debian,codename=${distro_codename},label=Debian-Security";
+};
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "03:00";
+EOF
+
+cat <<'EOF' >/etc/apt/apt.conf.d/20auto-upgrades
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+EOF
+
+
 systemctl restart cockpit
 
 echo "==================================================="
