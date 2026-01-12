@@ -150,4 +150,37 @@ cat > "$BRAND_DIR/branding.css" <<'EOF'
 }
 
 body.login-pf {
-  background-image: url("fundo.jpg") !i
+  background-image: url("fundo.jpg") !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+body.login-pf::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: -1;
+}
+
+body.login-pf .container {
+  background: rgba(15, 23, 42, 0.88) !important;
+  backdrop-filter: blur(6px);
+  border-radius: 18px;
+  padding: 24px;
+}
+EOF
+
+echo "==> Criando link simbólico em /etc/cockpit/branding..."
+rm -rf "$LINK_DIR"
+ln -sfn "$BRAND_DIR" "$LINK_DIR"
+
+echo "==> Limpando cache do Cockpit..."
+rm -rf /var/cache/cockpit/*
+rm -rf /run/cockpit/*
+
+echo "==> Reiniciando cockpit.socket..."
+systemctl restart cockpit.socket
+
+echo "==> Concluído! Recarregue o navegador com Ctrl+Shift+R."
