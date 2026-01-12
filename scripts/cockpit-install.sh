@@ -23,6 +23,7 @@ Enabled: yes
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
 apt update
+apt full-upgrade -y
 
 echo "--- [2/6] Instalando Cockpit Core (Backports) ---"
 apt install -t ${VERSION_CODENAME}-backports cockpit cockpit-networkmanager cockpit-packagekit network-manager --no-install-recommends -y
