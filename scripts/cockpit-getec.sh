@@ -25,7 +25,7 @@ EOF
 cp /etc/issue /etc/issue.net
 
 # ==============================================================================
-# DESATIVAR MOTD PADRÃO
+# DESATIVAR MOTD PADRÃO DO DEBIAN
 # ==============================================================================
 echo "==> Desativando MOTD padrão do Debian..."
 
@@ -59,8 +59,7 @@ FIRST_FLAG="$HOME/.first_login_done"
 
 clear
 echo
-echo "LXC base"
-echo "    🌐   GETEC IFRO"
+echo "    🌐  GETEC IFRO — Laboratório Virtual"
 echo
 echo "    🖥️   OS: ${OS_NAME}"
 echo "    🏠   Hostname: ${HOST}"
@@ -75,7 +74,7 @@ case "$USER_NAME" in
     echo "    📘  Ambiente de estudos — utilize apenas para atividades acadêmicas."
     ;;
   professor)
-    echo "    📗  Ambiente docente — utilize com responsabilidade institucional."
+    echo "    📗  Ambiente docente — uso institucional."
     ;;
   semaphore)
     echo "    🤖  Conta de automação — acesso restrito."
@@ -122,7 +121,7 @@ curl -fsSL -o "$BRAND_DIR/fundo.jpg" \
   https://raw.githubusercontent.com/condeshockness/images/refs/heads/main/lxc/fundo.jpg
 
 echo "==> Criando manifest.json..."
-cat > "$BRAND_DIR/manifest.json" <<'EOF'
+cat <<'EOF' >"$BRAND_DIR/manifest.json"
 {
   "version": 1,
   "name": "getec",
@@ -135,7 +134,7 @@ cat > "$BRAND_DIR/manifest.json" <<'EOF'
 EOF
 
 echo "==> Criando branding.css..."
-cat > "$BRAND_DIR/branding.css" <<'EOF'
+cat <<'EOF' >"$BRAND_DIR/branding.css"
 #badge {
   inline-size: 96px;
   block-size: 96px;
@@ -177,8 +176,8 @@ rm -rf "$LINK_DIR"
 ln -sfn "$BRAND_DIR" "$LINK_DIR"
 
 echo "==> Limpando cache do Cockpit..."
-rm -rf /var/cache/cockpit/*
-rm -rf /run/cockpit/*
+rm -rf /var/cache/cockpit/* || true
+rm -rf /run/cockpit/* || true
 
 echo "==> Reiniciando cockpit.socket..."
 systemctl restart cockpit.socket
