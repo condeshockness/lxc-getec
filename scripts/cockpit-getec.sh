@@ -35,51 +35,6 @@ if [ -d /etc/update-motd.d ]; then
 fi
 
 # ==============================================================================
-# HOSTNAME AUTOMÁTICO: aluno-<CTID> (EXECUTA SÓ UMA VEZ)
-# ==============================================================================
-echo "==> Configurando hostname automático baseado no CTID do Proxmox..."
-
-cat <<'EOF' >/usr/local/sbin/set-hostname-from-ctid.sh
-#!/usr/bin/env bash
-set -e
-
-FLAG="/etc/hostname.lock"
-[ -f "$FLAG" ] && exit 0
-
-# Detecta CTID real do LXC pelo cgroup
-CTID=$(basename "$(cat /proc/1/cpuset 2>/dev/null)" | tr -cd '0-9')
-
-[ -z "$CTID" ] && exit 0
-
-NEW_HOST="aluno-${CTID}"
-
-echo "$NEW_HOST" > /etc/hostname
-hostnamectl set-hostname "$NEW_HOST" --static
-
-touch "$FLAG"
-EOF
-
-
-chmod +x /usr/local/sbin/set-hostname-from-ctid.sh
-
-cat <<'EOF' >/etc/systemd/system/set-hostname-from-ctid.service
-[Unit]
-Description=Define hostname aluno-<CTID> no primeiro boot
-After=systemd-remount-fs.service
-Wants=systemd-remount-fs.service
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/sbin/set-hostname-from-ctid.sh
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable set-hostname-from-ctid.service
-
-# ==============================================================================
 # BANNER PÓS-LOGIN (DINÂMICO + CPU/RAM + PRIMEIRO LOGIN DO ALUNO)
 # ==============================================================================
 echo "==> Configurando banner GETEC pós-login (dinâmico)..."
@@ -195,37 +150,4 @@ cat > "$BRAND_DIR/branding.css" <<'EOF'
 }
 
 body.login-pf {
-  background-image: url("fundo.jpg") !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-}
-
-body.login-pf::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: -1;
-}
-
-body.login-pf .container {
-  background: rgba(15, 23, 42, 0.88) !important;
-  backdrop-filter: blur(6px);
-  border-radius: 18px;
-  padding: 24px;
-}
-EOF
-
-echo "==> Criando link simbólico em /etc/cockpit/branding..."
-rm -rf "$LINK_DIR"
-ln -sfn "$BRAND_DIR" "$LINK_DIR"
-
-echo "==> Limpando cache do Cockpit..."
-rm -rf /var/cache/cockpit/*
-rm -rf /run/cockpit/*
-
-echo "==> Reiniciando cockpit.socket..."
-systemctl restart cockpit.socket
-
-echo "==> Concluído! Recarregue o navegador com Ctrl+Shift+R."
+  background-image: url("fundo.jpg") !i
