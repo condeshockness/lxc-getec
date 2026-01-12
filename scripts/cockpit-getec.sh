@@ -7,6 +7,76 @@
 # ==============================================================================
 set -e
 
+#Personalização de login
+echo "==> Configurando aviso legal institucional (antes do login)..."
+
+cat <<'EOF' >/etc/issue
+********************************************************************
+*  SISTEMA INSTITUCIONAL - GETEC IFRO                               *
+*                                                                  *
+*  O acesso é restrito a usuários autorizados.                     *
+*  Atividades podem ser monitoradas e registradas.                *
+*  Uso indevido está sujeito às penalidades previstas em lei.     *
+********************************************************************
+EOF
+
+cp /etc/issue /etc/issue.net
+
+echo "==> Desativando MOTD padrão do Debian..."
+
+rm -f /etc/motd
+if [ -d /etc/update-motd.d ]; then
+  chmod -x /etc/update-motd.d/* || true
+fi
+
+echo "==> Configurando banner GETEC pós-login (dinâmico)..."
+
+cat <<'EOF' >/etc/profile.d/getec-banner.sh
+#!/usr/bin/env bash
+
+USER_NAME=$(whoami)
+HOST=$(hostname)
+IP_ADDR=$(hostname -I | awk '{print $1}')
+OS_NAME=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
+
+clear
+
+echo
+echo "LXC base"
+echo "    🌐   GETEC IFRO"
+echo
+echo "    🖥️   OS: ${OS_NAME}"
+echo "    🏠   Hostname: ${HOST}"
+echo "    💡   IP Address: ${IP_ADDR}"
+echo
+
+# ===== Mensagem por tipo de usuário =====
+case "$USER_NAME" in
+  aluno)
+    echo "    📘  Ambiente de estudos — utilize apenas para atividades acadêmicas."
+    ;;
+  professor)
+    echo "    📗  Ambiente docente — utilize com responsabilidade institucional."
+    ;;
+  semaphore)
+    echo "    🤖  Conta de automação — acesso restrito."
+    ;;
+  *)
+    echo "    👤  Usuário: ${USER_NAME}"
+    ;;
+esac
+
+echo
+echo "------------------------------------------------------------"
+echo
+EOF
+
+chmod +x /etc/profile.d/getec-banner.sh
+
+
+#Personalização cockpit
+
+
 BRAND_DIR="/usr/share/cockpit/branding/getec"
 LINK_DIR="/etc/cockpit/branding"
 
