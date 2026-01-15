@@ -9,20 +9,12 @@ msg_info() { echo -e "\e[34m[INFO]\e[0m $1"; }
 msg_ok()   { echo -e "\e[32m[OK]\e[0m $1"; }
 msg_error(){ echo -e "\e[31m[ERRO]\e[0m $1"; }
 
-get_latest_release() {
-  curl -fsSL https://api.github.com/repos/"$1"/releases/latest | jq -r '.tag_name'
-}
-
 ### ========= ROOT =========
 
 if [[ "$EUID" -ne 0 ]]; then
   msg_error "Execute como root"
   exit 1
 fi
-
-### ========= VERSÕES =========
-
-PORTAINER_LATEST_VERSION=$(get_latest_release "portainer/portainer")
 
 ### ========= BASE =========
 
@@ -34,7 +26,7 @@ msg_ok "Sistema atualizado"
 msg_info "Instalando dependências"
 apt-get install -y \
   ca-certificates curl gnupg lsb-release \
-  iptables fuse-overlayfs uidmap jq dbus $STD
+  iptables fuse-overlayfs uidmap dbus $STD
 msg_ok "Dependências instaladas"
 
 ### ========= AJUSTES LXC UNPRIV =========
@@ -54,7 +46,7 @@ EOF
 
 msg_ok "Configuração Docker aplicada"
 
-### ========= REPOSITÓRIO DOCKER OFICIAL =========
+### ========= REPOSITÓRIO DOCKER =========
 
 msg_info "Adicionando repositório oficial do Docker"
 
@@ -90,7 +82,7 @@ systemctl restart docker
 
 ### ========= PORTAINER CE =========
 
-msg_info "Instalando Portainer CE $PORTAINER_LATEST_VERSION"
+msg_info "Instalando Portainer CE"
 
 docker volume create portainer_data >/dev/null 2>&1 || true
 
