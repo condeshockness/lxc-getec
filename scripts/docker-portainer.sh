@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-STD=">/dev/null 2>&1"
-
 ### ========= FUNÇÕES =========
 
 msg_info() { echo -e "\e[34m[INFO]\e[0m $1"; }
@@ -20,24 +18,24 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-### ========= VERSÕES =========
-
-DOCKER_LATEST_VERSION=$(get_latest_release "moby/moby")
-PORTAINER_LATEST_VERSION=$(get_latest_release "portainer/portainer")
-DOCKER_COMPOSE_LATEST_VERSION=$(get_latest_release "docker/compose")
-
 ### ========= BASE =========
 
 msg_info "Atualizando sistema base"
-apt-get update $STD
-apt-get -y upgrade $STD
+apt-get update >/dev/null
+apt-get -y upgrade >/dev/null
 msg_ok "Sistema atualizado"
 
 msg_info "Instalando dependências"
 apt-get install -y \
   ca-certificates curl gnupg lsb-release \
-  iptables fuse-overlayfs uidmap jq dbus $STD
+  iptables fuse-overlayfs uidmap jq dbus >/dev/null
 msg_ok "Dependências instaladas"
+
+### ========= VERSÕES (agora curl já existe) =========
+
+DOCKER_LATEST_VERSION=$(get_latest_release "moby/moby")
+PORTAINER_LATEST_VERSION=$(get_latest_release "portainer/portainer")
+DOCKER_COMPOSE_LATEST_VERSION=$(get_latest_release "docker/compose")
 
 ### ========= AJUSTES LXC UNPRIV =========
 
@@ -59,21 +57,24 @@ msg_ok "Configuração Docker aplicada"
 ### ========= INSTALAR DOCKER =========
 
 msg_info "Instalando Docker $DOCKER_LATEST_VERSION"
-sh <(curl -fsSL https://get.docker.com) $STD
+sh <(curl -fsSL https://get.docker.com) >/dev/null
 msg_ok "Docker instalado"
 
-systemctl enable docker $STD
+systemctl enable docker >/dev/null
 systemctl restart docker
 
 ### ========= DOCKER COMPOSE V2 =========
 
 msg_info "Instalando Docker Compose v2 $DOCKER_COMPOSE_LATEST_VERSION"
+
 mkdir -p /usr/local/lib/docker/cli-plugins
 
-curl -fsSL "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_LATEST_VERSION}/docker-compose-$(uname -s)-$(uname -m)" \
+curl -fsSL \
+  "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_LATEST_VERSION}/docker-compose-$(uname -s)-$(uname -m)" \
   -o /usr/local/lib/docker/cli-plugins/docker-compose
 
 chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
 msg_ok "Docker Compose instalado"
 
 ### ========= PORTAINER CE =========
@@ -96,7 +97,7 @@ msg_ok "Portainer instalado"
 ### ========= TESTE =========
 
 msg_info "Testando Docker"
-docker run --rm hello-world >/dev/null 2>&1 && msg_ok "Docker funcionando corretamente"
+docker run --rm hello-world >/dev/null && msg_ok "Docker funcionando corretamente"
 
 msg_ok "Instalação concluída com sucesso em LXC sem privilégios!"
 exit 0
