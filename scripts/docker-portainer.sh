@@ -1,103 +1,24 @@
-#!/usr/bin/env bash
-set -e
+apt update && apt -y upgrade
 
-### ========= FUNÇÕES =========
-
-msg_info() { echo -e "\e[34m[INFO]\e[0m $1"; }
-msg_ok()   { echo -e "\e[32m[OK]\e[0m $1"; }
-msg_error(){ echo -e "\e[31m[ERRO]\e[0m $1"; }
-
-get_latest_release() {
-  curl -fsSL https://api.github.com/repos/"$1"/releases/latest | grep '"tag_name":' | cut -d'"' -f4
-}
-
-### ========= ROOT =========
-
-if [[ "$EUID" -ne 0 ]]; then
-  msg_error "Execute como root"
-  exit 1
-fi
-
-### ========= BASE =========
-
-msg_info "Atualizando sistema base"
-apt-get update >/dev/null
-apt-get -y upgrade >/dev/null
-msg_ok "Sistema atualizado"
-
-msg_info "Instalando dependências"
-apt-get install -y \
-  ca-certificates curl gnupg lsb-release \
-  iptables fuse-overlayfs uidmap jq dbus >/dev/null
-msg_ok "Dependências instaladas"
-
-### ========= VERSÕES (agora curl já existe) =========
-
-DOCKER_LATEST_VERSION=$(get_latest_release "moby/moby")
-PORTAINER_LATEST_VERSION=$(get_latest_release "portainer/portainer")
-DOCKER_COMPOSE_LATEST_VERSION=$(get_latest_release "docker/compose")
-
-### ========= AJUSTES LXC UNPRIV =========
-
-msg_info "Configurando Docker para LXC sem privilégios"
+apt install -y ca-certificates curl gnupg
 
 mkdir -p /etc/docker
+echo '{ "log-driver": "journald" }' > /etc/docker/daemon.json
 
-cat > /etc/docker/daemon.json <<'EOF'
-{
-  "log-driver": "journald",
-  "storage-driver": "overlay2",
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "iptables": true
-}
-EOF
+curl -fsSL https://get.docker.com | sh
 
-msg_ok "Configuração Docker aplicada"
-
-### ========= INSTALAR DOCKER =========
-
-msg_info "Instalando Docker $DOCKER_LATEST_VERSION"
-sh <(curl -fsSL https://get.docker.com) >/dev/null
-msg_ok "Docker instalado"
-
-systemctl enable docker >/dev/null
+systemctl enable docker
 systemctl restart docker
 
-### ========= DOCKER COMPOSE V2 =========
+docker run --rm hello-world
 
-msg_info "Instalando Docker Compose v2 $DOCKER_COMPOSE_LATEST_VERSION"
-
-mkdir -p /usr/local/lib/docker/cli-plugins
-
-curl -fsSL \
-  "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_LATEST_VERSION}/docker-compose-$(uname -s)-$(uname -m)" \
-  -o /usr/local/lib/docker/cli-plugins/docker-compose
-
-chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
-
-msg_ok "Docker Compose instalado"
-
-### ========= PORTAINER CE =========
-
-msg_info "Instalando Portainer CE $PORTAINER_LATEST_VERSION"
-
-docker volume create portainer_data >/dev/null 2>&1 || true
+docker volume create portainer_data
 
 docker run -d \
-  -p 8000:8000 \
-  -p 9443:9443 \
-  --name=portainer \
+  --name portainer \
   --restart=always \
+  -p 9443:9443 \
+  -p 8000:8000 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v portainer_data:/data \
   portainer/portainer-ce:latest
-
-msg_ok "Portainer instalado"
-
-### ========= TESTE =========
-
-msg_info "Testando Docker"
-docker run --rm hello-world >/dev/null && msg_ok "Docker funcionando corretamente"
-
-msg_ok "Instalação concluída com sucesso em LXC sem privilégios!"
-exit 0

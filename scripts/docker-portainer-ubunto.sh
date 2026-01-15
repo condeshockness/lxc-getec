@@ -1,104 +1,42 @@
 #!/usr/bin/env bash
 set -e
 
-### ========= FUNÇÕES =========
+echo "[INFO] Atualizando sistema"
+apt update && apt -y upgrade
 
-msg_info() { echo -e "\e[34m[INFO]\e[0m $1"; }
-msg_ok()   { echo -e "\e[32m[OK]\e[0m $1"; }
-msg_error(){ echo -e "\e[31m[ERRO]\e[0m $1"; }
+echo "[INFO] Instalando dependências"
+apt install -y ca-certificates curl gnupg uidmap dbus
 
-### ========= ROOT =========
-
-if [[ "$EUID" -ne 0 ]]; then
-  msg_error "Execute como root"
-  exit 1
-fi
-
-### ========= BASE =========
-
-msg_info "Atualizando sistema base"
-apt-get update >/dev/null 2>&1
-apt-get -y upgrade >/dev/null 2>&1
-msg_ok "Sistema atualizado"
-
-msg_info "Instalando dependências"
-apt-get install -y \
-  ca-certificates curl gnupg lsb-release \
-  iptables fuse-overlayfs uidmap dbus >/dev/null 2>&1
-msg_ok "Dependências instaladas"
-
-### ========= AJUSTES LXC UNPRIV =========
-
-msg_info "Configurando Docker para LXC sem privilégios"
-
+echo "[INFO] Configurando Docker"
 mkdir -p /etc/docker
-
-cat > /etc/docker/daemon.json <<'EOF'
+cat <<EOF > /etc/docker/daemon.json
 {
   "log-driver": "journald",
-  "storage-driver": "overlay2",
-  "exec-opts": ["native.cgroupdriver=systemd"],
-  "iptables": true
+  "storage-driver": "overlay2"
 }
 EOF
 
-msg_ok "Configuração Docker aplicada"
+echo "[INFO] Instalando Docker"
+curl -fsSL https://get.docker.com | sh
 
-### ========= REPOSITÓRIO DOCKER =========
-
-msg_info "Adicionando repositório oficial do Docker"
-
-install -m 0755 -d /etc/apt/keyrings
-
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-  | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
-chmod a+r /etc/apt/keyrings/docker.gpg
-
-UBUNTU_CODENAME=$(lsb_release -cs)
-
-cat > /etc/apt/sources.list.d/docker.list <<EOF
-deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-https://download.docker.com/linux/ubuntu $UBUNTU_CODENAME stable
-EOF
-
-apt-get update >/dev/null 2>&1
-msg_ok "Repositório Docker configurado"
-
-### ========= INSTALAR DOCKER =========
-
-msg_info "Instalando Docker Engine"
-
-apt-get install -y \
-  docker-ce docker-ce-cli containerd.io \
-  docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
-
-msg_ok "Docker instalado"
-
-systemctl enable docker >/dev/null 2>&1
+systemctl enable docker
 systemctl restart docker
 
-### ========= PORTAINER CE =========
+echo "[INFO] Testando Docker"
+docker run --rm hello-world
 
-msg_info "Instalando Portainer CE"
+echo "[INFO] Instalando Portainer"
+docker volume create portainer_data
 
-docker volume create portainer_data >/dev/null 2>&1 || true
+docker rm -f portainer 2>/dev/null || true
 
 docker run -d \
-  -p 8000:8000 \
-  -p 9443:9443 \
-  --name=portainer \
+  --name portainer \
   --restart=always \
+  -p 9443:9443 \
+  -p 8000:8000 \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v portainer_data:/data \
   portainer/portainer-ce:latest
 
-msg_ok "Portainer instalado"
-
-### ========= TESTE =========
-
-msg_info "Testando Docker"
-docker run --rm hello-world >/dev/null 2>&1 && msg_ok "Docker funcionando corretamente"
-
-msg_ok "Instalação concluída com sucesso no Ubuntu 25.04 (LXC sem privilégios)!"
-exit 0
+echo "[OK] Docker e Portainer instalados com sucesso"

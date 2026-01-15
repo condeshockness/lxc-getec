@@ -5,14 +5,34 @@ Instalação simples
 Instalar cockipit
 
 ```bash
-apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/main/scripts/cockpit-install.sh)"
+apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/teste/scripts/cockpit-install.sh)"
 ```
 
 
 Personalizar cockpit getec
 ```bash
-apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/main/scripts/cockpit-getec.sh)"
+apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/teste/scripts/cockpit-getec.sh)"
 ```
+
+Instalaçção docker
+
+nano /etc/pve/lxc/105.conf
+
+
+lxc.apparmor.profile: unconfined
+lxc.cap.drop:
+lxc.mount.auto: proc:rw sys:rw
+lxc.sysctl.net.ipv4.ip_unprivileged_port_start = 0
+lxc.mount.entry: /dev/fuse dev/fuse none bind,create=file
+
+
+```bash
+apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/teste/scripts/docker-portainer-ubunto.sh)"
+
+
+apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/main/scripts/docker-portainer.sh)"
+
+
 
 Reinicie o conteiner
 
