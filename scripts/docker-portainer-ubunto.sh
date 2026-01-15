@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-STD=">/dev/null 2>&1"
-
 ### ========= FUNÇÕES =========
 
 msg_info() { echo -e "\e[34m[INFO]\e[0m $1"; }
@@ -19,14 +17,14 @@ fi
 ### ========= BASE =========
 
 msg_info "Atualizando sistema base"
-apt-get update $STD
-apt-get -y upgrade $STD
+apt-get update >/dev/null 2>&1
+apt-get -y upgrade >/dev/null 2>&1
 msg_ok "Sistema atualizado"
 
 msg_info "Instalando dependências"
 apt-get install -y \
   ca-certificates curl gnupg lsb-release \
-  iptables fuse-overlayfs uidmap dbus $STD
+  iptables fuse-overlayfs uidmap dbus >/dev/null 2>&1
 msg_ok "Dependências instaladas"
 
 ### ========= AJUSTES LXC UNPRIV =========
@@ -64,7 +62,7 @@ deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
 https://download.docker.com/linux/ubuntu $UBUNTU_CODENAME stable
 EOF
 
-apt-get update $STD
+apt-get update >/dev/null 2>&1
 msg_ok "Repositório Docker configurado"
 
 ### ========= INSTALAR DOCKER =========
@@ -73,11 +71,11 @@ msg_info "Instalando Docker Engine"
 
 apt-get install -y \
   docker-ce docker-ce-cli containerd.io \
-  docker-buildx-plugin docker-compose-plugin $STD
+  docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
 
 msg_ok "Docker instalado"
 
-systemctl enable docker $STD
+systemctl enable docker >/dev/null 2>&1
 systemctl restart docker
 
 ### ========= PORTAINER CE =========
