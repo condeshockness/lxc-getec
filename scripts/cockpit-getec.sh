@@ -112,13 +112,13 @@ mkdir -p "$BRAND_DIR"
 
 echo "==> Baixando imagens do GitHub..."
 curl -fsSL -o "$BRAND_DIR/logo.jpg" \
-  https://raw.githubusercontent.com/condeshockness/images/refs/heads/main/lxc/logo.jpg
+  https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/teste/images/lxc/logo.jpg
 
 curl -fsSL -o "$BRAND_DIR/favicon.ico" \
-  https://raw.githubusercontent.com/condeshockness/images/refs/heads/main/lxc/favicon.ico
+  https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/teste/images/lxc/favicon.ico
 
 curl -fsSL -o "$BRAND_DIR/fundo.jpg" \
-  https://raw.githubusercontent.com/condeshockness/images/refs/heads/main/lxc/fundo.jpg
+  https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/teste/images/lxc/fundo.jpg
 
 echo "==> Criando manifest.json..."
 cat <<'EOF' >"$BRAND_DIR/manifest.json"
