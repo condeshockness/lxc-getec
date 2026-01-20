@@ -14,27 +14,7 @@ Personalizar cockpit getec
 apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/teste/scripts/cockpit-getec.sh)"
 ```
 
-Instalaçção docker
 
-nano /etc/pve/lxc/105.conf
-
-
-lxc.apparmor.profile: unconfined
-lxc.cap.drop:
-lxc.mount.auto: proc:rw sys:rw
-lxc.sysctl.net.ipv4.ip_unprivileged_port_start = 0
-lxc.mount.entry: /dev/fuse dev/fuse none bind,create=file
-
-
-```bash
-apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/teste/scripts/docker-portainer-ubunto.sh)"
-
-
-apt update && apt install -y curl && bash -c "$(curl -fsSL https://raw.githubusercontent.com/condeshockness/lxc-getec/refs/heads/main/scripts/docker-portainer.sh)"
-
-
-
-Reinicie o conteiner
 
 Forma manual
 
@@ -221,3 +201,190 @@ systemctl restart cockpit.socket
 echo "==> Concluído! Recarregue o navegador com Ctrl+Shift+R."
 
 ```
+
+Instalaçção docker
+
+✅ 1. Configuração do LXC no Proxmox (HOST)
+
+No Proxmox, edite o container:
+
+nano /etc/pve/lxc/CTID.conf
+
+
+Adicione / confirme:
+
+unprivileged: 1
+
+features: nesting=1,keyctl=1
+
+lxc.apparmor.profile: unconfined
+
+lxc.cap.drop:
+
+
+⚠️ lxc.cap.drop: vazio remove a remoção de capabilities (necessário p/ Docker).
+
+Depois:
+
+pct stop CTID
+pct start CTID
+
+
+
+Reinicie o conteiner
+
+
+Docker
+
+✅ 1. Estrutura de pastas no LXC
+
+No LXC:
+
+mkdir -p /opt/semaphore/{iac,pgdata}
+cd /opt/semaphore
+
+✅ 2. Arquivo .env (obrigatório)
+
+Crie:
+
+nano /opt/semaphore/.env
+
+
+Exemplo mínimo funcional:
+
+# ===== DATABASE =====
+SEMAPHORE_DB_DIALECT=postgres
+SEMAPHORE_DB_HOST=postgres
+SEMAPHORE_DB_PORT=5432
+SEMAPHORE_DB_USER=semaphore
+SEMAPHORE_DB_PASS=semaphore123
+SEMAPHORE_DB_NAME=semaphore
+
+# ===== ADMIN =====
+SEMAPHORE_ADMIN=admin
+SEMAPHORE_ADMIN_PASSWORD=Admin@123
+SEMAPHORE_ADMIN_NAME=Administrador
+SEMAPHORE_ADMIN_EMAIL=admin@local
+
+# ===== APP =====
+SEMAPHORE_PLAYBOOK_PATH=/iac
+
+
+🔐 Depois você pode migrar senhas para Vault, mas para bootstrap isso é perfeito.
+
+✅ 3. Dockerfile (com Terraform)
+
+Em /opt/semaphore/Dockerfile:
+
+# Stage 1 - Terraform
+FROM hashicorp/terraform:1.6.6 AS terraform
+
+# Stage 2 - Semaphore
+FROM semaphoreui/semaphore:v2.16.51
+
+USER root
+
+COPY --from=terraform /bin/terraform /usr/local/bin/terraform
+
+RUN apk add --no-cache \
+    openssh-client \
+    git \
+    bash \
+    curl \
+    ca-certificates
+
+RUN terraform version
+
+USER semaphore
+
+✅ 4. docker-compose.yml
+
+Em /opt/semaphore/docker-compose.yml:
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: semaphore-db
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${SEMAPHORE_DB_USER}
+      POSTGRES_PASSWORD: ${SEMAPHORE_DB_PASS}
+      POSTGRES_DB: ${SEMAPHORE_DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  semaphore:
+    build: .
+    image: semaphore-custom
+    container_name: semaphore
+    restart: always
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+    env_file: .env
+    volumes:
+      - semaphore_data:/var/lib/semaphore
+      - ./iac:/iac
+
+volumes:
+  pgdata:
+  semaphore_data:
+
+✅ 5. Subir os containers
+cd /opt/semaphore
+docker compose up -d --build
+
+
+Acompanhar:
+
+docker logs -f semaphore
+
+
+Quando aparecer algo como:
+
+Listening on :3000
+
+
+👉 já está pronto.
+
+✅ 6. Acessar no navegador
+http://IP_DO_LXC:3000
+
+
+Login:
+
+user: admin
+
+senha: conforme .env
+
+✅ 7. Usar Portainer (opcional)
+
+Se quiser gerenciar por Portainer:
+
+Stack → Add Stack
+
+Nome: semaphore
+
+Cole o docker-compose.yml
+
+Upload .env
+
+Deploy
+
+Funciona igual.
+
+⚠️ Pontos críticos em LXC não-privilegiado (muito importante)
+
+No Proxmox host:
+
+pct set CTID -features nesting=1,keyctl=1
+pct restart CTID
+
+
+Sem isso:
+
+Docker até sobe
+
+mas builds e terraform quebram depois

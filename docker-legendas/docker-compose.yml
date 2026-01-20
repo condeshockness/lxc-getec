@@ -1,0 +1,9 @@
+services:
+  transcriber:
+    build: ./app
+    container_name: yt-transcriber
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data   # salva transcrições
